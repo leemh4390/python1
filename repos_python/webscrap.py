@@ -4,11 +4,12 @@ import requests
 import re
 import openpyxl
 import math
+import urllib
+import urllib.request
 
 # 작성자 : 이민혁
 # 날짜 : 2024/02/28
 # 최종 수정일 : 2024/02/28
-# 오피스콘 기프티콘 크롤링 코드
         
 wb = openpyxl.Workbook()
 sheet = wb.active
@@ -29,16 +30,16 @@ sheet.append(["브랜드", "상품명", "원가","할인가", "할인율", "상�
 
 # 상단에 있는 물건 코드를 xfilename 에 입력하면 할인 금액이 6% 미만인 제품은 제외하고 엑셀 파일이 생성됩니다.
 # 기획 상품은 사용자가 엑셀 파일 열어서 직접 제거해야함
-xlfilename = "12"
+xlfilename = "1"
 
 # 시작 페이지
 startNum = 1 
 # 종료 페이지
-endNum = 1
+endNum = 2
 
 # 금액 범위
 startPrice  = 5000 # 최소 금액
-endPrice    = 10000 # 최대 금액
+endPrice    = 5000 # 최대 금액
 
 # 상품 url 은 여기서 수정하면 됩니다.
 urlschWord_mapping = {
@@ -59,11 +60,12 @@ urlschWord_mapping = {
 if xlfilename in urlschWord_mapping :
     urlschWord      = urlschWord_mapping[xlfilename]
 
+img_list = []
+
 for i in range(startNum, endNum + 1) :
     urlPage         = "https://www.officecon.co.kr/product/sales/list?page="+str(i)
     urlschPrice     = "schStartPrice="+str(startPrice)+"&schEndPrice="+str(endPrice)+"&orderGubun=POPULAR#header"
     url             = urlPage + urlschWord + urlschPrice
-    print(url)
     res             = requests.get(url)
     soup            = BeautifulSoup(res.content, 'html.parser')
     items           = soup.select("#product_list > ul > li")
@@ -77,6 +79,17 @@ for i in range(startNum, endNum + 1) :
         discountRate_element    = item.select_one("strong.percent")
         product_url             = "https://www.officecon.co.kr/product/sales/view?productId=" + product_code.split('Id=',1)[1].strip("'); return false;") + "#header"
         
+        base_url = "https://www.officecon.co.kr"
+        img_src = item.select_one('img').get('src')
+
+        url = base_url + img_src
+        img_list.append(url)
+        for i in range(0, len(img_list)) : 
+            try : 
+                urllib.request.urlretrieve(img_list[i],str(productName)+'.jpg')
+            except :
+                continue
+
         if price_element :
             orgPrice = int(re.sub(r'[^\d]+', '', price_element.get_text(strip=True))) 
         else :
@@ -91,6 +104,8 @@ for i in range(startNum, endNum + 1) :
 
         disPrice = round(orgPrice - orgPrice * (discountRate / 100),-1)  # 할인된 가격 계산
         sheet.append([brandName, productName, orgPrice, disPrice, discountRate, product_url])
+
+
     
 # 엑셀 파일명
 filename_mapping = {
@@ -109,6 +124,6 @@ filename_mapping = {
 }
 
 # 상단에 있는 xfilename 과 매핑시켜서 엑셀 파일명으로 생성함
-if xlfilename in filename_mapping:
-    wb.save(filename_mapping[xlfilename])                               
+# if xlfilename in filename_mapping:
+#     wb.save(filename_mapping[xlfilename])                               
 
