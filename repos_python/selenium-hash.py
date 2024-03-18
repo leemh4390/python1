@@ -9,7 +9,6 @@ import re
 url = "https://hashbox.monster/probability" 
 res = requests.get(url) 
 res.raise_for_status()
-soup = BeautifulSoup(res.content, "html.parser")
 driver = webdriver.Chrome()
 
 def selenium_test():
