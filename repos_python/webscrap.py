@@ -6,14 +6,24 @@ import openpyxl
 import math
 import urllib
 import urllib.request
+import os
 
 # 작성자 : 이민혁
 # 날짜 : 2024/02/28
 # 최종 수정일 : 2024/02/28
+# 오피스콘 카테고리에 맞는 목록을 엑셀로 만들어줍니다.
+
+# 사진이 저장되는 폴더명
+folder_name = "officecon"
+
+# 폴더가 없으면 만듬
+if not os.path.exists(folder_name):
+    os.makedirs(folder_name)
         
+# 엑셀 생성
 wb = openpyxl.Workbook()
 sheet = wb.active
-sheet.append(["브랜드", "상품명", "원가","할인가", "할인율", "상품링크", "최소수량"])
+sheet.append(["브랜드", "상품명", "사진명", "가격", "상품내용", "할인가", "할인율", "상품링크", "최소수량"])
 
 # 커피/음료 1 
 # 베이커리/디저트 2
@@ -35,11 +45,11 @@ xlfilename = "1"
 # 시작 페이지
 startNum = 1 
 # 종료 페이지
-endNum = 2
+endNum = 20
 
 # 금액 범위
 startPrice  = 5000 # 최소 금액
-endPrice    = 5000 # 최대 금액
+endPrice    = 10000 # 최대 금액
 
 # 상품 url 은 여기서 수정하면 됩니다.
 urlschWord_mapping = {
@@ -86,7 +96,9 @@ for i in range(startNum, endNum + 1) :
         img_list.append(url)
         for i in range(0, len(img_list)) : 
             try : 
-                urllib.request.urlretrieve(img_list[i],str(productName)+'.jpg')
+                # 이미지 저장하는 코드
+                main_img = os.path.join(folder_name,"n_" + productName + ".jpg")
+                urllib.request.urlretrieve(img_list[i],filename=main_img)
             except :
                 continue
 
@@ -101,9 +113,11 @@ for i in range(startNum, endNum + 1) :
                 continue
         else :
             continue
+        main_img_name = "n_" + productName + ".jpg"
 
         disPrice = round(orgPrice - orgPrice * (discountRate / 100),-1)  # 할인된 가격 계산
-        sheet.append([brandName, productName, orgPrice, disPrice, discountRate, product_url])
+        
+        sheet.append([brandName, productName, main_img_name, orgPrice, "" ,disPrice, discountRate, product_url])
 
 
     
@@ -124,6 +138,6 @@ filename_mapping = {
 }
 
 # 상단에 있는 xfilename 과 매핑시켜서 엑셀 파일명으로 생성함
-# if xlfilename in filename_mapping:
-#     wb.save(filename_mapping[xlfilename])                               
+if xlfilename in filename_mapping:
+    wb.save(filename_mapping[xlfilename])                               
 
