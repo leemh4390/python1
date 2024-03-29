@@ -9,35 +9,53 @@ db = pymysql.connect(
         charset='utf8'
 )
 
+cursor = db.cursor()
+
 def random_product() :
-    weights = [0.0001, 0.1, 1.4999, 38, 32, 28]
-    types = ['X','A','B','C','D','E']
-    selected_type = random.choices(types, weights=weights)[0]
+    # 확률
+    code_weights = [90, 10]
+    # 그룹코드
+    code_types = ['Gift', 'Point']
+    selected_type = random.choices(code_types, code_weights)[0]
+    print(selected_type)
+    # 기프트가 당첨됐을때
+    if selected_type == 'Gift':
+        # 확률
+        prob_weights = [88, 6, 3, 2, 1]
+        #그룹확률
+        prob_types = ['GiftA','GiftB', 'GiftC', 'GiftD', 'GiftE']
+        selected_group = random.choices(prob_types, prob_weights)[0]
+        sql = f"select * from `product` where `group_code` = '{selected_type}' and `group_prob` = '{selected_group}'"
+        cursor.execute(sql)
+        result = cursor.fetchall()
+        return result
+    # Point 가 당첨
+    else :
+        sql = f"select * from `product` where `group_code` = '{selected_type}' and `group_prob` = 'PointA'"
+        cursor.execute(sql)
+        result = cursor.fetchall()     
+        return result
     
-    cursor = db.cursor()
-
-    sql = f"select * from product where grade = '{selected_type}'"
-    cursor.execute(sql)
-    result = cursor.fetchall()
-
+for i in range(99900) :
+    result = random_product()
     if result :
         selected_result = random.choice(result)
-        result_id           = selected_result[0]
-        result_grade        = selected_result[2]
-        result_name         = selected_result[3]
-        result_price        = selected_result[4]
-        result_orgprice     = selected_result[5]
-        result_discount  = selected_result[6]
-        result_delivery     = selected_result[7]
+        print(selected_result)
+        selected_productid          = selected_result[0]
+        selected_boxname            = selected_result[1]
+        selected_groupcode          = selected_result[2]
+        selected_groupprob          = selected_result[3]
+        selected_productname        = selected_result[4]
+        selected_productprice       = selected_result[5]
+        selected_productdisprice    = selected_result[6]
+        selected_productdiscount    = selected_result[7]
+        selected_convert            = selected_result[8]
+        selected_delivery           = selected_result[9]
 
-        sql = "INSERT INTO reward (pno, grade, name, product_price, product_orgprice, discount, delivery) VALUES (%s, %s, %s, %s, %s, %s, %s)"
-        cursor.execute(sql,(result_id, result_grade, result_name, result_price, result_orgprice, result_discount, result_delivery))
-        db.commit()
-    else :
-        print("Not Found Exception")
+        print("selected_productname : ", selected_productname, ", selected_productprice : ", selected_productprice)
 
-for i in range(100000) :
-    random_product()
+        sql = "INSERT INTO reward (pno, boxname, group_code, group_prob, name, product_price, product_disprice, discount, convert_price, delivery) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        cursor.execute(sql,(selected_productid, selected_boxname, selected_groupcode, selected_groupprob, selected_productname, selected_productprice, selected_productdisprice, selected_productdiscount, selected_convert, selected_delivery))
+        db.commit()    
 
-    if i > 100000 :
-        print('end')
+      
